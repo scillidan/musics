@@ -92,10 +92,6 @@ def compile_one(name: str) -> int:
 
 
 def typ_one(name: str) -> int:
-    paths = paths_for(name)
-    if paths["typ"].exists():
-        safe_print(f"Reusing existing typ: {paths['typ']}")
-        return compile_one(name)
     if generate_typ_file(name) != 0:
         return 1
     return compile_one(name)

@@ -8,8 +8,8 @@
 // Returns an empty box if path is none/empty so callers don't need guards.
 #let image-box(
   path,
-  stroke-width: 0.15pt,
-  stroke-color: black,
+  stroke-width: 0.3pt,
+  stroke-color: rgb(200, 200, 200),
 ) = {
   if path == none or path == "" {
     return []
@@ -17,8 +17,13 @@
   box(
     width: 100%,
     height: 100%,
-    stroke: stroke-width + stroke-color,
-    image(path, width: 100%, height: 100%, fit: "contain"),
+    inset: stroke-width,
+    box(
+      width: 100%,
+      height: 100%,
+      stroke: stroke-width + stroke-color,
+      image(path, width: 100%, height: 100%, fit: "contain"),
+    )
   )
 }
 

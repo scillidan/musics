@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import shutil
 import sys
 from pathlib import Path
@@ -16,7 +15,9 @@ from lib.common import (
     PROJECT_ROOT,
     compile_typ,
     ensure_output_dirs,
+    load_meta,
     make_mp4,
+    merge_meta,
     pdf_to_jpg,
     safe_print,
     strip_ext,
@@ -33,29 +34,8 @@ from lib.concat_auds import (
 )
 
 META_DIR = Path("metadata")
-DEFAULT_CONFIG = "_default.json"
 OUTPUT_BASE = "_output"
 MP3_DIR = Path(OUTPUT_BASE, "mp3s")
-
-
-def load_json(path: Path) -> dict:
-    if not path.exists():
-        return {}
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-        safe_print(f"Error: invalid JSON {path}: {e}")
-        sys.exit(1)
-
-
-def load_meta(name: str) -> tuple[dict, dict]:
-    defaults = load_json(META_DIR / DEFAULT_CONFIG) if META_DIR.exists() else {}
-    album = load_json(META_DIR / f"{name}.json") if META_DIR.exists() else {}
-    return defaults, album
-
-
-def merge_meta(defaults: dict, album: dict) -> dict:
-    return defaults | album
 
 
 def find_album_cover(name: str, subdir: str = "") -> str | None:
@@ -198,7 +178,7 @@ def load_album_context(
     name: str,
 ) -> tuple[str, Path, bool, dict, str, str, str, list[str]]:
     album_name, input_path, is_dir = find_album_input(name)
-    defaults, album_meta = load_meta(album_name)
+    defaults, album_meta = load_meta(album_name, META_DIR)
     meta = merge_meta(defaults, album_meta)
     title, artist = resolve_title_artist(album_name, meta)
     year = meta.get("year", "")
@@ -268,10 +248,6 @@ def typ_one(name: str) -> int:
     ensure_output_dirs()
     subdir = Path.cwd().name
     paths = output_paths_for(name)
-
-    if paths["typ"].exists():
-        safe_print(f"Reusing existing typ: {paths['typ']}")
-        return compile_one(name, subdir)
 
     album_name, input_path, is_dir, meta, title, artist, year, images = (
         load_album_context(name)

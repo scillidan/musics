@@ -20,6 +20,8 @@
   lyrics-inset: (top: 0pt, left: 0pt),
   image-inset: (top: 0pt, left: 0pt),
   spacing_all: 10pt,
+  title-size: 1em,
+  lyrics-hanging-indent: 1.33em,
   artist-grid-cols: none,
   artist-grid-rows: none,
   artist-gutter: 5pt,
@@ -46,17 +48,17 @@
   set text(font: font)
 
   let title-block = {
-    text(size: 1em, weight: "bold")[#name]
+    text(size: title-size, weight: "bold")[#name]
     v(spacing_all - 0.5em)
   }
 
   let render-lyrics(lines) = {
     set text(size: lyrics-size)
-    let par-args = (
-      justify: false,
-      hanging-indent: 2em,
-      spacing: lyrics-spacing,
-    )
+  let par-args = (
+    justify: false,
+    hanging-indent: lyrics-hanging-indent,
+    spacing: lyrics-spacing,
+  )
     if lyrics-wrap-leading != none {
       par-args = par-args + (leading: lyrics-wrap-leading)
     }
@@ -79,8 +81,10 @@
       artist-grid-cols
     } else if artist-grid-rows != none {
       calc.ceil(n / artist-grid-rows)
-    } else {
+    } else if n <= 3 {
       n
+    } else {
+      calc.ceil(calc.sqrt(n))
     }
     grid(
       columns: (1fr,) * c,
@@ -115,13 +119,13 @@
         }
         let bounds = (0,) + split-points + (lyrics-lines.len(),)
 
-        grid(
-          columns: widths,
-          rows: (auto, 1fr),
-          gutter: spacing_all,
-          ..range(n).map(i => if i == 0 { title-block } else { [] }),
-          ..range(n).map(i => render-lyrics(lyrics-lines.slice(bounds.at(i), bounds.at(i + 1)))),
-        )
+      grid(
+        columns: widths,
+        rows: (auto, 1fr),
+        gutter: spacing_all,
+        grid.cell(colspan: n, title-block),
+        ..range(n).map(i => render-lyrics(lyrics-lines.slice(bounds.at(i), bounds.at(i + 1)))),
+      )
       },
     )
   ]

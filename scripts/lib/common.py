@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import glob
+import json
 import subprocess
 import sys
 from collections.abc import Iterable
@@ -17,6 +18,30 @@ def safe_print(msg: str) -> None:
         print(msg)
     except UnicodeEncodeError:
         sys.stdout.buffer.write((msg + "\n").encode("utf-8", "replace"))
+
+
+def load_json(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        safe_print(f"Error: invalid JSON {path}: {e}")
+        sys.exit(1)
+
+
+def load_meta(
+    name: str, meta_dir: Path, default_config: str = "_default.json"
+) -> tuple[dict, dict]:
+    if not meta_dir.exists():
+        return {}, {}
+    defaults = load_json(meta_dir / default_config)
+    item = load_json(meta_dir / f"{name}.json")
+    return defaults, item
+
+
+def merge_meta(defaults: dict, item: dict) -> dict:
+    return defaults | item
 
 
 def run_checked(cmd: list[str], cwd: str | Path | None = None) -> bool:

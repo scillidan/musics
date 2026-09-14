@@ -15,7 +15,9 @@ from lib.common import (
     ensure_output_dirs,
     find_artist_images,
     find_cover,
+    load_meta,
     make_mp4,
+    merge_meta,
     parse_artist_names_from_song_name,
     pdf_to_jpg,
     safe_print,
@@ -26,6 +28,19 @@ from lib.common import (
 from lib.lrc_to_srt import lrc_to_srt
 
 SUBDIR = "weekly"
+META_DIR = Path("metadata")
+
+LAYOUT_DEFAULTS = {
+    "left-ratio": 0.35,
+    "lyrics-columns": 1,
+    "lyrics-size": "0.65em",
+    "title-size": "1em",
+    "spacing_all": "10pt",
+    "lyrics-hanging-indent": "1.33em",
+    "artist-grid-cols": "none",
+    "artist-grid-rows": "none",
+    "artist-gutter": "5pt",
+}
 
 
 def find_media(name: str, medias_dir: str = "medias") -> Path | None:
@@ -46,6 +61,7 @@ def generate_typ(
     cover: str | None,
     artists: list[str],
     lrc: Path | None,
+    meta: dict,
 ) -> str:
     cover_arg = f'"{typ_str(cover)}"' if cover else "none"
     lrc_arg = f'"/{SUBDIR}/medias/{typ_str(name)}.lrc"' if lrc else "none"
@@ -57,23 +73,23 @@ def generate_typ(
     else:
         artists_arg = "()"
 
+    layout = LAYOUT_DEFAULTS | meta
+
     param_lines = [
         f'  name: "{typ_str(name)}"',
         f"  cover: {cover_arg}",
         f"  artists: {artists_arg}",
         f"  lrc: {lrc_arg}",
-        "  left-ratio: 0.35",
-        "  spacing_all: 10pt",
-        "  lyrics-columns: 1",
-        "  lyrics-size: 0.55em",
+        f"  left-ratio: {layout['left-ratio']}",
+        f"  spacing_all: {layout['spacing_all']}",
+        f"  lyrics-columns: {layout['lyrics-columns']}",
+        f"  lyrics-size: {layout['lyrics-size']}",
+        f"  title-size: {layout['title-size']}",
+        f"  lyrics-hanging-indent: {layout['lyrics-hanging-indent']}",
+        f"  artist-grid-cols: {layout['artist-grid-cols']}",
+        f"  artist-grid-rows: {layout['artist-grid-rows']}",
+        f"  artist-gutter: {layout['artist-gutter']}",
     ]
-    if len(artists) > 1:
-        param_lines.extend(
-            [
-                "  // artist-grid-cols: 3",
-                "  // artist-grid-rows: 1",
-            ]
-        )
 
     return (
         '#import "/scripts/templates/weekly.typ": lyric-poster\n\n'
@@ -102,7 +118,10 @@ def generate_typ_file(name: str) -> int:
     artist_names = parse_artist_names_from_song_name(name)
     artists = find_artist_images(name, artist_names, subdir=SUBDIR)
 
-    typ_content = generate_typ(name, cover, artists, lrc)
+    defaults, item_meta = load_meta(name, META_DIR)
+    meta = merge_meta(defaults, item_meta)
+
+    typ_content = generate_typ(name, cover, artists, lrc, meta)
     if write_typ_if_changed(paths["typ"], typ_content):
         safe_print(f"Generated: {paths['typ']}")
     else:
@@ -123,10 +142,6 @@ def compile_one(name: str) -> int:
 
 
 def typ_one(name: str) -> int:
-    paths = paths_for(name)
-    if paths["typ"].exists():
-        safe_print(f"Reusing existing typ: {paths['typ']}")
-        return compile_one(name)
     if generate_typ_file(name) != 0:
         return 1
     return compile_one(name)
