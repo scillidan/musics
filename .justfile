@@ -21,3 +21,9 @@ ost-typ name:
 	cd ost && uv run ../scripts/gen_album.py typ "{{name}}"
 ost-add name:
 	cd ost && uv run ../scripts/gen_album.py add "{{name}}"
+
+# mid
+mid-typ name:
+	cd mid && uv run ../scripts/gen_mid.py typ "{{name}}"
+mid-add name:
+	cd mid && uv run ../scripts/gen_mid.py add "{{name}}"
