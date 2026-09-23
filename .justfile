@@ -22,8 +22,10 @@ ost-typ name:
 ost-add name:
 	cd ost && uv run ../scripts/gen_album.py add "{{name}}"
 
-# mid
+# mid - sheet-music cover videos from MIDI
+# mid-typ: generate cover only (typ/pdf/jpg), no audio
 mid-typ name:
 	cd mid && uv run ../scripts/gen_mid.py typ "{{name}}"
+# mid-add: generate mp4; reuse _output/typs/*.typ if present, else create from scratch
 mid-add name:
 	cd mid && uv run ../scripts/gen_mid.py add "{{name}}"

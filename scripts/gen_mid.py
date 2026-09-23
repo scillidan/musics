@@ -15,7 +15,6 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from lib.common import (
     PROJECT_ROOT,
     compile_typ,
-    ensure_output_dirs,
     load_meta,
     make_mp4,
     merge_meta,
@@ -147,7 +146,10 @@ def paths_for(name: str) -> dict:
 
 
 def ensure_mid_output_dirs() -> None:
-    ensure_output_dirs(OUTPUT_BASE)
+    Path(OUTPUT_BASE).mkdir(exist_ok=True)
+    Path(OUTPUT_BASE, "typs").mkdir(exist_ok=True)
+    Path(OUTPUT_BASE, "pdfs").mkdir(exist_ok=True)
+    Path(OUTPUT_BASE, "jpgs").mkdir(exist_ok=True)
     SCORE_PDF_DIR.mkdir(parents=True, exist_ok=True)
     SCORE_PAGE_DIR.mkdir(parents=True, exist_ok=True)
     MP3_DIR.mkdir(parents=True, exist_ok=True)
@@ -276,15 +278,21 @@ def resolve_audio(name: str, midi_path: Path) -> Path | None:
 
 
 def add_one(name: str) -> int:
-    if typ_one(name) != 0:
-        return 1
+    paths = paths_for(name)
+
+    if paths["typ"].exists():
+        safe_print(f"Reusing existing typ: {paths['typ']}")
+        if compile_one(name) != 0:
+            return 1
+    else:
+        if typ_one(name) != 0:
+            return 1
 
     midi_path = find_midi(name)
     if not midi_path:
         safe_print(f"Error: MIDI not found for {name}")
         return 1
 
-    paths = paths_for(name)
     audio_path = resolve_audio(name, midi_path)
     if not audio_path:
         safe_print(f"Error: audio not found and MIDI render failed for {name}")
@@ -301,11 +309,11 @@ def main() -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser(
-        "typ", help="generate score PDF, typ, and cover pdf/jpg (no audio)"
+        "typ", help="generate cover only (typ/pdf/jpg), no audio"
     ).add_argument("name")
 
     sub.add_parser(
-        "add", help="compile pdf/jpg/mp4 (reuse _output/typs/*.typ if present)"
+        "add", help="generate mp4 (reuse typ if present, else create from scratch)"
     ).add_argument("name")
 
     args = parser.parse_args()
