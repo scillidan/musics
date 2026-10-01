@@ -14,6 +14,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from lib.common import (
     PROJECT_ROOT,
     compile_typ,
+    ensure_meta_file,
     ensure_output_dirs,
     load_meta,
     make_mp4,
@@ -36,6 +37,12 @@ from lib.concat_auds import (
 META_DIR = Path("metadata")
 OUTPUT_BASE = "_output"
 MP3_DIR = Path(OUTPUT_BASE, "mp3s")
+
+# Values written to metadata/<album>.json when an album has no metadata file yet.
+# Keyed by subdir because cd and ost share this script.
+NEW_META_DEFAULTS = {
+    "ost": {"body-size": "1.1em"},
+}
 
 
 def find_album_cover(name: str, subdir: str = "") -> str | None:
@@ -178,6 +185,9 @@ def load_album_context(
     name: str,
 ) -> tuple[str, Path, bool, dict, str, str, str, list[str]]:
     album_name, input_path, is_dir = find_album_input(name)
+    subdir = Path.cwd().name
+    if subdir in NEW_META_DEFAULTS:
+        ensure_meta_file(album_name, META_DIR, NEW_META_DEFAULTS[subdir])
     defaults, album_meta = load_meta(album_name, META_DIR)
     meta = merge_meta(defaults, album_meta)
     title, artist = resolve_title_artist(album_name, meta)
@@ -185,7 +195,6 @@ def load_album_context(
 
     images = meta.get("images")
     if images is None:
-        subdir = Path.cwd().name
         cover = find_album_cover(album_name, subdir=subdir)
         images = [cover] if cover else []
 

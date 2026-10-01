@@ -12,6 +12,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from lib.common import (
     PROJECT_ROOT,
     compile_typ,
+    ensure_meta_file,
     ensure_output_dirs,
     find_artist_images,
     find_cover,
@@ -41,6 +42,9 @@ LAYOUT_DEFAULTS = {
     "artist-grid-rows": "none",
     "artist-gutter": "5pt",
 }
+
+# Values written to metadata/<name>.json when a song has no metadata file yet.
+NEW_META_DEFAULTS = {"lyrics-size": "0.55em"}
 
 
 def find_media(name: str, medias_dir: str = "medias") -> Path | None:
@@ -118,6 +122,7 @@ def generate_typ_file(name: str) -> int:
     artist_names = parse_artist_names_from_song_name(name)
     artists = find_artist_images(name, artist_names, subdir=SUBDIR)
 
+    ensure_meta_file(name, META_DIR, NEW_META_DEFAULTS)
     defaults, item_meta = load_meta(name, META_DIR)
     meta = merge_meta(defaults, item_meta)
 

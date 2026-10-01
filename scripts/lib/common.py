@@ -40,6 +40,19 @@ def load_meta(
     return defaults, item
 
 
+def ensure_meta_file(name: str, meta_dir: Path, defaults: dict | None = None) -> Path:
+    """Create meta_dir/<name>.json from defaults if it does not exist yet."""
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    path = meta_dir / f"{name}.json"
+    if not path.exists():
+        path.write_text(
+            json.dumps(defaults or {}, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        safe_print(f"Created metadata: {path}")
+    return path
+
+
 def merge_meta(defaults: dict, item: dict) -> dict:
     return defaults | item
 
@@ -167,6 +180,34 @@ def pdf_to_jpg(pdf_path: Path, jpg_path: Path) -> bool:
     )
 
 
+def get_media_duration(path: Path) -> float | None:
+    """Return media duration in seconds via ffprobe, or None if unavailable."""
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(path),
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    try:
+        return float(result.stdout.strip())
+    except ValueError:
+        return None
+
+
 def make_mp4(
     jpg_path: Path,
     audio_path: Path,
@@ -180,7 +221,7 @@ def make_mp4(
         "-loop",
         "1",
         "-framerate",
-        "1",
+        "10",
         "-i",
         str(jpg_path),
         "-i",
@@ -191,9 +232,22 @@ def make_mp4(
         "stillimage",
         "-pix_fmt",
         "yuv420p",
-        "-shortest",
-        "-y",
     ]
+    # Give the output an explicit duration instead of relying on -shortest.
+    # The video is a looped still image; with -shortest, ffmpeg stops emitting
+    # video frames as soon as the audio decoder hits EOF, so the video stream can
+    # end several seconds before the audio stream. Players that use the video
+    # track length as the presentation timeline then cut the song off early.
+    # Passing -t keeps the video track covering the whole audio; 10 fps keeps the
+    # video/audio track lengths within one frame of each other.
+    duration = get_media_duration(audio_path)
+    if duration is not None:
+        # +0.1s (one frame at 10 fps) rounds the video up so it always covers
+        # the audio track instead of ending a frame short.
+        cmd.extend(["-t", f"{duration + 0.1:.3f}"])
+    else:
+        cmd.append("-shortest")
+    cmd.append("-y")
     if audio_codec == "copy":
         cmd.extend(["-c:a", "copy"])
     else:
