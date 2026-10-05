@@ -17,6 +17,8 @@ cd-add name:
 	cd cd && uv run ../scripts/gen_album.py add "{{name}}"
 
 # ost
+ost-chp name:
+	cd ost && uv run ../scripts/gen_album.py chp "{{name}}"
 ost-typ name:
 	cd ost && uv run ../scripts/gen_album.py typ "{{name}}"
 ost-add name:
@@ -29,3 +31,11 @@ mid-typ name:
 # mid-add: generate mp4; reuse _output/typs/*.typ if present, else create from scratch
 mid-add name:
 	cd mid && uv run ../scripts/gen_mid.py add "{{name}}"
+
+# cumaean - waveform-stack cover videos from source audio (CUMAEAN_SOURCE)
+cumaean-meta:
+	cd cumaean && uv run ../scripts/gen_cumaean_meta.py
+cumaean-typ name:
+	cd cumaean && uv run ../scripts/gen_cumaean.py typ "{{name}}"
+cumaean-add name:
+	cd cumaean && uv run ../scripts/gen_cumaean.py add "{{name}}"

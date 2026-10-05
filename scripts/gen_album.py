@@ -304,6 +304,15 @@ def merge_album_media(name: str, input_path: Path, is_dir: bool) -> Path | None:
     return paths["mp3"]
 
 
+def chp_one(name: str) -> int:
+    album_name, input_path, is_dir, _, _, _, _, _ = load_album_context(name)
+    chp_path = generate_chp_for_cover(album_name, input_path, is_dir)
+    if chp_path is None:
+        return 1
+    safe_print(f"Chapters ready: {chp_path}")
+    return 0
+
+
 def add_one(name: str) -> int:
     if typ_one(name) != 0:
         return 1
@@ -328,6 +337,9 @@ def main() -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser(
+        "chp", help="generate (or locate) the chapter file only, no cover/audio"
+    ).add_argument("name")
+    sub.add_parser(
         "typ", help="generate chapter file, typ, and cover pdf/jpg (no audio merge)"
     ).add_argument("name")
     sub.add_parser(
@@ -337,6 +349,8 @@ def main() -> int:
     args = parser.parse_args()
     name = strip_ext(args.name)
 
+    if args.cmd == "chp":
+        return chp_one(name)
     if args.cmd == "typ":
         return typ_one(name)
     if args.cmd == "add":

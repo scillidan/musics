@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import glob
 import json
+import os
 import subprocess
 import sys
 from collections.abc import Iterable
@@ -11,6 +12,18 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = SCRIPT_DIR.parent
+
+
+def load_dotenv(*paths: Path) -> None:
+    for path in paths:
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 def safe_print(msg: str) -> None:

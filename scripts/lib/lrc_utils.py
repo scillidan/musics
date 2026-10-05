@@ -51,8 +51,3 @@ def parse_lrc(path: Path) -> list[tuple[float, str]]:
             text = m.group(3).strip()
             lines.append((ts, text))
     return lines
-
-
-def strip_timestamps(text: str) -> str:
-    """Remove LRC timestamps from the start of each line."""
-    return "\n".join(LRC_TIME_RE.sub("", line).strip() for line in text.splitlines())
