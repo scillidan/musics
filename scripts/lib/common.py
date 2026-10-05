@@ -5,6 +5,7 @@ from __future__ import annotations
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 from collections.abc import Iterable
@@ -12,6 +13,13 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = SCRIPT_DIR.parent
+
+_VAR_RE = re.compile(r"\$\{([^}]+)\}")
+
+
+def _expand_vars(value: str) -> str:
+    """Expand ${VAR} placeholders from the environment (left as-is if unset)."""
+    return _VAR_RE.sub(lambda m: os.environ.get(m.group(1), m.group(0)), value)
 
 
 def load_dotenv(*paths: Path) -> None:
@@ -23,7 +31,9 @@ def load_dotenv(*paths: Path) -> None:
             if not line or line.startswith("#") or "=" not in line:
                 continue
             key, _, value = line.partition("=")
-            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+            os.environ.setdefault(
+                key.strip(), _expand_vars(value.strip().strip('"').strip("'"))
+            )
 
 
 def safe_print(msg: str) -> None:

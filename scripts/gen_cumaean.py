@@ -28,6 +28,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from lib.common import (
     PROJECT_ROOT,
     compile_typ,
+    load_dotenv,
     load_json,
     load_meta,
     make_mp4,
@@ -44,9 +45,14 @@ META_DIR = Path("metadata")
 OUTPUT_BASE = "_output"
 WAVE_DIR = Path(OUTPUT_BASE, "waves")
 
-SOURCE_ROOT = Path(
-    os.environ.get("CUMAEAN_SOURCE", r"C:\Users\User\Local\Media\cdn_media_cumaean")
-)
+load_dotenv(Path(".env"), PROJECT_ROOT / ".env")
+
+if not os.environ.get("CUMAEAN_SOURCE"):
+    raise SystemExit(
+        "Error: CUMAEAN_SOURCE is not set (env or .env: path to source audio dir)"
+    )
+
+SOURCE_ROOT = Path(os.environ["CUMAEAN_SOURCE"])
 AUDIO_EXT = ".ogg"
 
 FFMPEG_EXE = "ffmpeg"

@@ -1,4 +1,4 @@
-"""Album (cd/ost) video generator."""
+"""Album (song/ost) video generator."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ OUTPUT_BASE = "_output"
 MP3_DIR = Path(OUTPUT_BASE, "mp3s")
 
 # Values written to metadata/<album>.json when an album has no metadata file yet.
-# Keyed by subdir because cd and ost share this script.
+# Keyed by subdir because song and ost share this script.
 NEW_META_DEFAULTS = {
     "ost": {"body-size": "1.1em"},
 }

@@ -10,11 +10,11 @@ instrumental-typ name:
 instrumental-add name:
 	cd instrumental && uv run ../scripts/gen_instrumental.py add "{{name}}"
 
-# cd
-cd-typ name:
-	cd cd && uv run ../scripts/gen_album.py typ "{{name}}"
-cd-add name:
-	cd cd && uv run ../scripts/gen_album.py add "{{name}}"
+# song (renamed from cd)
+song-typ name:
+	cd song && uv run ../scripts/gen_album.py typ "{{name}}"
+song-add name:
+	cd song && uv run ../scripts/gen_album.py add "{{name}}"
 
 # ost
 ost-chp name:
@@ -33,9 +33,11 @@ mid-add name:
 	cd mid && uv run ../scripts/gen_mid.py add "{{name}}"
 
 # cumaean - waveform-stack cover videos from source audio (CUMAEAN_SOURCE)
-cumaean-meta:
-	cd cumaean && uv run ../scripts/gen_cumaean_meta.py
 cumaean-typ name:
 	cd cumaean && uv run ../scripts/gen_cumaean.py typ "{{name}}"
 cumaean-add name:
 	cd cumaean && uv run ../scripts/gen_cumaean.py add "{{name}}"
+
+# song - lrc/metadata preprocessing (strip credits into metadata/, normalize lrc)
+song-prep *args:
+	cd song && uv run ../scripts/prep_lrc_meta.py {{args}}
