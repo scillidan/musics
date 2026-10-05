@@ -10,7 +10,7 @@ instrumental-typ name:
 instrumental-add name:
 	cd instrumental && uv run ../scripts/gen_instrumental.py add "{{name}}"
 
-# song (renamed from cd)
+# song (renamed from cd) - weekly-style covers; album add switches per-track posters
 song-typ name:
 	cd song && uv run ../scripts/gen_album.py typ "{{name}}"
 song-add name:

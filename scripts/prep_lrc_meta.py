@@ -56,6 +56,7 @@ META_TAG_RE = re.compile(r"^\[([A-Za-z][A-Za-z0-9#/_ -]*):(.*)\]$")
 ISRC_RE = re.compile(r"^ISRC[\s\-:]*(.+)$", re.IGNORECASE)
 COLON_RE = re.compile(r"^([^:：]{1,60}?)\s*[:：]\s*(.*?)\s*$")
 TRAILING_SLASH_RE = re.compile(r"\s*//+\s*$")
+SPACE_RUN_RE = re.compile(r" {2,}")
 ASCII_LABEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 &.,'\-/()]*$")
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 TRACK_NO_RE = re.compile(r"^(\d+)[.\s]")
@@ -371,7 +372,9 @@ def parse_timestamp(m: re.Match[str]) -> float:
 
 
 def clean_text(text: str) -> str:
-    return TRAILING_SLASH_RE.sub("", text).strip()
+    # collapse runs of 2+ ASCII spaces to one (lyric spacing standard);
+    # ideographic spaces (U+3000) are kept — the reference albums use them.
+    return SPACE_RUN_RE.sub(" ", TRAILING_SLASH_RE.sub("", text)).strip()
 
 
 def is_title_line(text: str, artist: str, line_no: int) -> bool:

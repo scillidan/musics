@@ -279,6 +279,60 @@ def make_mp4(
     return run_checked(cmd)
 
 
+def make_mp4_slides(
+    slides: list[tuple[Path, float]],
+    audio_path: Path,
+    mp4_path: Path,
+    fps: int = 10,
+) -> bool:
+    """Create an MP4 that switches still image at each slide boundary.
+
+    slides: list of (jpg_path, duration_seconds) in playback order. The video
+    track length equals the sum of durations, so with per-track chapter
+    durations it stays in sync with a concatenated audio track.
+    """
+    if not slides:
+        safe_print("Error: no slides given")
+        return False
+    total = sum(d for _, d in slides)
+    safe_print(f"Creating MP4 with {len(slides)} slides: {mp4_path.name}")
+    list_path = mp4_path.parent / f".{mp4_path.stem}_slides.txt"
+    lines: list[str] = []
+    for jpg, duration in slides:
+        lines.append(f"file '{jpg.resolve()}'")
+        lines.append(f"duration {duration:.3f}")
+    lines.append(f"file '{slides[-1][0].resolve()}'")
+    list_path.write_text("\n".join(lines), encoding="utf-8")
+    try:
+        return run_checked(
+            [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(list_path),
+                "-i",
+                str(audio_path),
+                "-vf",
+                f"fps={fps},format=yuv420p",
+                "-c:v",
+                "libx264",
+                "-tune",
+                "stillimage",
+                "-c:a",
+                "copy",
+                "-t",
+                f"{total + 0.1:.3f}",
+                str(mp4_path),
+            ]
+        )
+    finally:
+        list_path.unlink(missing_ok=True)
+
+
 def ensure_output_dirs(base: str = "_output") -> None:
     Path(base).mkdir(exist_ok=True)
     Path(base, "typs").mkdir(exist_ok=True)
